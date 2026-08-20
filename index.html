@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>AnemiaLab · IA clínica</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script>
+      window.MathJax = {
+        tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+      };
+    </script>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"
+    ></script>
+  </head>
+  <body>
+    <header>
+      <a href="#"
+        >μ <span><b>AnemiaLab</b><small>IA clínica interactiva</small></span></a
+      >
+      <p id="modelStatus">Modelo sin entrenar</p>
+    </header>
+    <main>
+      <section class="hero">
+        <div>
+          <small>LABORATORIO DIDÁCTICO</small>
+          <h1>Explora modelos clínicos<br /><em>viendo cómo aprenden.</em></h1>
+          <p>
+            La médica aporta el criterio experto; el aplicativo permite
+            contrastarlo con agrupación y clasificación automática.
+          </p>
+        </div>
+        <aside>
+          <span>Cada paciente es un vector</span
+          >\[P_i=(H_i,\,F_i,\,VCM_i)\]<small
+            >Hemoglobina · Ferritina · Volumen corpuscular medio</small
+          >
+        </aside>
+      </section>
+      <section class="methods" aria-label="Método">
+        <button class="active" data-method="kmeans">
+          <span>NO SUPERVISADO</span><b>K-Means</b
+          ><small>Descubre grupos sin leer los rótulos médicos.</small></button
+        ><button data-method="knn">
+          <span>SUPERVISADO</span><b>KNN · Vecinos</b
+          ><small>Clasifica según pacientes rotulados cercanos.</small></button
+        ><button data-method="svm">
+          <span>SUPERVISADO</span><b>SVM · Vectores</b
+          ><small>Reserva para separar rótulos mediante fronteras.</small>
+        </button>
+      </section>
+      <div id="methodNote" class="note">
+        K-Means ignora los rótulos durante el entrenamiento. Después permite
+        compararlos con el criterio médico.
+      </div>
+      <nav>
+        <button class="active" data-view="data">01 · Datos y rótulos</button
+        ><button data-view="training">02 · Entrenamiento</button
+        ><button data-view="predict">03 · Clasificar</button>
+      </nav>
+      <section class="workspace">
+        <div class="visual">
+          <div class="visual-head">
+            <div>
+              <small>ESPACIO DE VARIABLES</small>
+              <h2>Explorador clínico 3D</h2>
+            </div>
+            <div class="plot-actions">
+              <span id="legend"></span>
+              <button id="resetView" title="Restablecer vista">↺ Vista</button>
+            </div>
+          </div>
+          <div class="plot-stage">
+            <svg id="plot" viewBox="0 0 760 520" role="img" aria-label="Pacientes y centroides. Arrastra para rotar y usa la rueda para acercar."></svg>
+            <div id="plotTooltip" class="plot-tooltip" hidden></div>
+            <div class="plot-help"><span>Arrastra para rotar</span><span>Rueda para zoom</span><span>Toca un punto para ver sus datos</span></div>
+          </div>
+          <p class="caption">
+            Cada eje conserva su unidad clínica. ◆ representa un centroide calculado.
+          </p>
+        </div>
+        <aside class="panel">
+          <section id="dataView">
+            <div class="panel-head">
+              <div>
+                <small>BASE DE ENTRENAMIENTO</small>
+                <h2><span id="count"></span> pacientes</h2>
+              </div>
+              <i>Guardado local</i>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>H<small>g/dL</small></th>
+                    <th>F<small>ng/mL</small></th>
+                    <th>VCM<small>fL</small></th>
+                    <th>Criterio médico<small>variable objetivo</small></th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="rows"></tbody>
+              </table>
+            </div>
+            <button id="add" class="secondary">＋ Agregar paciente</button>
+            <div class="label-progress">
+              <span>Rotulación clínica</span><b id="labelCount"></b>
+              <div><i id="labelBar"></i></div>
+              <small id="labelHelp"></small>
+            </div>
+            <div class="settings">
+              <label
+                ><span id="parameterLabel"
+                  >Número de grupos <b>k = <i id="kValue">3</i></b></span
+                ><input id="k" type="range" min="2" max="5" value="3" /></label
+              ><label class="switch"
+                ><span
+                  ><b>Estandarizar variables</b
+                  ><small
+                    >Evita que ferritina domine por su escala.</small
+                  ></span
+                ><input id="normalize" type="checkbox" checked
+              /></label>
+            </div>
+            <button id="train" class="primary">Entrenar K-Means →</button
+            ><button id="reset" class="link">Restaurar datos de ejemplo</button>
+          </section>
+          <section id="trainingView" hidden>
+            <div id="trainingContent"></div>
+          </section>
+          <section id="predictView" hidden>
+            <div id="predictContent"></div>
+          </section>
+        </aside>
+      </section>
+      <section class="flow">
+        <div>
+          <b>01</b>
+          <h3>Rotular</h3>
+          <p>La médica marca la interpretación clínica.</p>
+        </div>
+        <div>
+          <b>02</b>
+          <h3>Representar</h3>
+          <p>Cada paciente se convierte en un vector.</p>
+        </div>
+        <div>
+          <b>03</b>
+          <h3>Entrenar</h3>
+          <p>El método aprende grupos o fronteras.</p>
+        </div>
+        <div>
+          <b>04</b>
+          <h3>Contrastar</h3>
+          <p>Se compara el resultado con el juicio experto.</p>
+        </div>
+      </section>
+    </main>
+    <footer>
+      AnemiaLab · Simulador educativo
+      <span>No sustituye una valoración o diagnóstico médico.</span>
+    </footer>
+    <script src="app.js"></script>
+  </body>
+</html>
