@@ -163,7 +163,7 @@ function training() {
     return;
   }
   if (model.type === "knn") {
-    box.innerHTML = `<div class="panel-head"><div><small>SUPERVISADO</small><h2>KNN preparado</h2></div></div><div class="lesson"><i>1</i><div><h3>Rótulos de la médica</h3><p>Se conservan ${model.data.length} pacientes rotulados. KNN no calcula centroides.</p></div></div><div class="lesson"><i>2</i><div><h3>Vecinos más cercanos</h3>${latex("N_k(x)=\\operatorname{arg\\,sort}_k\;d(x,x_i)")}</div></div><div class="lesson"><i>3</i><div><h3>Votación</h3>${latex("\\hat y=\\operatorname{mode}\\{y_i:x_i\\in N_k(x)\\}")}</div></div><button class="primary" onclick="show('predict')">Clasificar paciente nuevo →</button>`;
+    box.innerHTML = `<div class="panel-head"><div><small>SUPERVISADO</small><h2>KNN preparado con k = ${model.k}</h2></div></div><div class="lesson"><i>1</i><div><h3>Rótulos de la médica</h3><p>Se conservan ${model.data.length} pacientes rotulados. KNN no calcula centroides.</p></div></div><div class="lesson"><i>2</i><div><h3>Exactamente ${model.k} vecinos</h3>${latex("N_k(x)=\\operatorname{arg\\,sort}_k\;d(x,x_i)")}</div></div><div class="lesson"><i>3</i><div><h3>Votación</h3>${latex("\\hat y=\\operatorname{mode}\\{y_i:x_i\\in N_k(x)\\}")}</div></div><button class="primary" onclick="show('predict')">Clasificar paciente nuevo →</button>`;
     typeset(box);
     return;
   }
@@ -211,7 +211,7 @@ function classify() {
     near.forEach((n) => (votes[n.p.label] = (votes[n.p.label] || 0) + 1));
     const win = Object.entries(votes).sort((a, b) => b[1] - a[1])[0][0];
     $("#answer").innerHTML =
-      `<div class="lesson"><i>1</i><div><h3>Vecinos consultados</h3>${near.map((n) => `<div class="neighbor"><span>${n.p.id} · ${n.p.label}</span><b>${n.d.toFixed(3)}</b></div>`).join("")}</div></div><div class="result"><span>VOTO MAYORITARIO</span><h3>${win}</h3><p>KNN transfiere el criterio de los vecinos rotulados.</p></div>`;
+      `<div class="lesson"><i>1</i><div><h3>${near.length} vecinos consultados (k = ${model.k})</h3>${near.map((n) => `<div class="neighbor"><span>${n.p.id} · ${n.p.label}</span><b>${n.d.toFixed(3)}</b></div>`).join("")}</div></div><div class="result"><span>VOTO MAYORITARIO</span><h3>${win}</h3><p>KNN transfiere el criterio de los vecinos rotulados.</p></div>`;
   } else {
     const ds = model.snap.centers.map((c) => distance(tx, c)),
       w = ds.indexOf(Math.min(...ds));
@@ -236,7 +236,7 @@ function train() {
       type: "knn",
       data,
       sc: scaler(data, $("#normalize").checked),
-      k: +$("#k").value,
+      k: Math.min(+$("#k").value, data.length),
     };
     $("#modelStatus").textContent = `KNN preparado · ${data.length} rotulados`;
     draw();
@@ -259,10 +259,11 @@ $$("[data-method]").forEach(
       $("#methodNote").innerHTML = supervised
         ? `<b>${method.toUpperCase()} es supervisado:</b> la médica debe rotular primero los pacientes.`
         : "K-Means ignora los rótulos durante el entrenamiento. Después permite compararlos con el criterio médico.";
+      const selectedK = $("#k").value;
       $("#parameterLabel").innerHTML =
         method === "kmeans"
-          ? 'Número de grupos <b>k = <i id="kValue">3</i></b>'
-          : 'Número de vecinos <b>k = <i id="kValue">3</i></b>';
+          ? `Número de grupos <b>k = <i id="kValue">${selectedK}</i></b>`
+          : `Número de vecinos <b>k = <i id="kValue">${selectedK}</i></b>`;
       $("#train").textContent =
         method === "svm"
           ? "Espacio SVM preparado"
